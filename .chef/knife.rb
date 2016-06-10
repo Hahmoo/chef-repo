@@ -8,4 +8,4 @@ validation_key           "#{current_dir}/hahmoo.pem"
 chef_server_url          "https://chef-server.mitns.com/organizations/hahmoo"
 syntax_check_cache_path  "#{ENV['HOME']}/.chef/syntaxcache"
 cookbook_path            ["#{current_dir}/../cookbooks"]
-
+knife[:editor]="vim"
