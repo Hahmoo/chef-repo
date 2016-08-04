@@ -7,8 +7,9 @@
 # All rights reserved - Do Not Redistribute
 #
 
+
 package "apache2" do
-  action :install
+  package_name node["apache_ubuntu"]["package"]
 end
 
 node["apache_ubuntu"]["sites"].each do |sitename, data| 
@@ -19,7 +20,13 @@ node["apache_ubuntu"]["sites"].each do |sitename, data|
     recursive true
   end
 
-template "/etc/apache2/#{sitename}.conf" do
+if node["platform"] == "ubuntu"
+  template_location = "/etc/apache2/sites-enabled/#{sitename}.conf"
+elsif node["platform"] == "centos"
+  template_location = "/etc/httpd/conf.d/#{sitename}.conf"
+end
+
+template template_location do
   source "vhost.erb"
   mode "0644"
   variables(
@@ -27,7 +34,7 @@ template "/etc/apache2/#{sitename}.conf" do
     :port => data["port"],
     :domain => data["domain"]
   )
-  notifies :restart, "service[apache2]"
+  notifies :restart, "service[httpd]"
 end
 
 template "/content/sites/#{sitename}/index.html" do
@@ -38,13 +45,26 @@ template "/content/sites/#{sitename}/index.html" do
     :comingsoon => "Coming Soon!"
   )
 end  
-
 end
 
-service "apache2" do
+execute "rm /etc/httpd/conf.d/welcome.conf" do
+  only_if do
+    File.exist?("/etc/httpd/conf.d/welcome.conf")
+  end
+  notifies :restart, "service[httpd]"
+end
+
+execute "rm /etc/httpd/conf.d/README" do
+  only_if do
+    File.exist?("/etc/httpd/conf.d/README")
+  end
+end
+
+service "httpd" do
+  service_name node["apache_ubuntu"]["package"]
   action [:enable, :start]
 end
 
-include_recipe "php::default"
+#include_recipe "php::default"
 
 
